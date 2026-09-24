@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>وكالة أولاد كجنكي العقارية</title>
+    <!-- مكتبة Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #355C4A;
+            --dark: #203A30;
+            --sage: #718878;
+            --background: #F6F5EF;
+            --surface: #FFFFFF;
+            --border: #DDE3DE;
+            --text: #26332D;
+            --text-secondary: #69746E;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Tahoma, Arial, sans-serif; }
+        body { background-color: var(--background); color: var(--text); direction: rtl; line-height: 1.7; overflow-x: hidden; }
+        
+        /* Header */
+        header { background: var(--surface); border-bottom: 1px solid var(--border); position: fixed; top: 0; width: 100%; z-index: 1000; display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; }
+        .logo { font-size: 15px; font-weight: bold; color: var(--dark); }
+        .btn-primary { background: var(--dark); color: #FFFFFF; padding: 8px 16px; border-radius: 20px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: none; transition: background 0.2s; }
+        .btn-primary:hover { background: var(--primary); }
+        .btn-whatsapp { background: #25d366; color: #fff; padding: 8px 14px; border-radius: 20px; font-weight: bold; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; font-size: 12px; border: none; cursor: pointer; width: 100%; }
+        
+        /* Hero Section */
+        .hero { min-height: 80vh; background: linear-gradient(rgba(32, 58, 48, 0.85), rgba(32, 58, 48, 0.9)), url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80') center/cover; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 90px 16px 40px; }
+        .hero h1 { font-size: 26px; font-weight: bold; margin-bottom: 12px; color: #FFFFFF; }
+        .hero h1 span { color: var(--sage); }
+        .hero p { font-size: 14px; color: #E2E8E4; max-width: 600px; margin-bottom: 20px; }
+        .badge { background: rgba(113, 136, 120, 0.25); border: 1px solid var(--sage); color: #FFFFFF; padding: 5px 12px; border-radius: 20px; font-weight: bold; margin-bottom: 14px; font-size: 11px; }
+        
+        /* Sections & Filters */
+        .section-title { text-align: center; padding-top: 40px; padding-bottom: 10px; padding-left: 16px; padding-right: 16px; }
+        .section-title h2 { font-size: 22px; font-weight: bold; color: var(--dark); margin-bottom: 4px; }
+        .section-title h2 span { color: var(--primary); }
+        .section-title p { color: var(--text-secondary); font-size: 12px; }
+        
+        .filter-container { max-width: 1000px; margin: 0 auto 20px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+        .filter-container select, .filter-container input { width: 100%; padding: 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12px; outline: none; }
+        
+        /* Grid */
+        .grid-properties { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; max-width: 1000px; margin: 0 auto; padding: 0 16px 30px; }
+        .prop-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+        .prop-img-container { position: relative; height: 170px; }
+        .prop-img-container img { width: 100%; height: 100%; object-fit: cover; }
+        .prop-badge { position: absolute; top: 10px; right: 10px; background: var(--primary); color: #FFFFFF; padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; }
+        .prop-content { padding: 14px; }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; margin-bottom: 6px; }
+        .status-available { background: rgba(113, 136, 120, 0.18); color: var(--primary); border: 1px solid var(--sage); }
+        .status-reserved { background: rgba(217, 164, 65, 0.18); color: #B2822B; }
+        .status-sold { background: rgba(184, 92, 92, 0.18); color: #A64444; }
+        
+        .prop-title { font-size: 15px; font-weight: bold; color: var(--text); margin-bottom: 4px; }
+        .prop-location { color: var(--text-secondary); font-size: 12px; margin-bottom: 8px; }
+        .prop-details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: var(--background); padding: 8px; border-radius: 6px; margin-bottom: 10px; font-size: 11px; border: 1px solid var(--border); }
+        .prop-footer { padding: 10px 14px; background: var(--background); border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+        .prop-price { font-size: 14px; font-weight: bold; color: var(--dark); }
+
+        /* Admin Styles */
+        #adminApp { display: none; padding-top: 80px; min-height: 100vh; background: var(--background); }
+        .admin-container { max-width: 900px; margin: 0 auto; padding: 16px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: var(--dark); }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--text); outline: none; }
+        
+        footer { background: var(--dark); padding: 16px; text-align: center; border-top: 1px solid var(--border); color: var(--border); font-size: 11px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">وكالة أولاد كجنكي العقارية</div>
+        <a href="tel:0922335500" class="btn-primary">اتصل بالإدارة</a>
+    </header>
+
+    <!-- الموقع العام -->
+    <div id="publicSite">
+        <section class="hero">
+            <div class="badge">✦ ثقتك.. استثمارك.. مستقبل أفضل ✦</div>
+            <h1>وكالة <span>أولاد كجنكي العقارية</span></h1>
+            <p>نحن حيث تكون الفرص.. وتبدأ الثقة في الصالحة.</p>
+        </section>
+
+        <section id="properties">
+            <div class="section-title">
+                <h2>عقارات <span>الوكالة الحية</span></h2>
+                <p>تصفح أحدث العروض العقارية المعتمدة</p>
+            </div>
+
+            <div class="filter-container">
+                <select id="filterType" onchange="loadPublicProperties()">
+                    <option value="">كل العمليات</option>
+                    <option value="sale">بيع</option>
+                    <option value="rent">إيجار</option>
+                    <option value="exchange">استبدال</option>
+                </select>
+                <select id="filterCategory" onchange="loadPublicProperties()">
+                    <option value="">كل أنواع العقارات</option>
+                    <option value="land">أرض</option>
+                    <option value="house">منزل</option>
+                    <option value="apartment">شقة</option>
+                    <option value="shop">محل</option>
+                </select>
+                <input type="text" id="filterArea" placeholder="ابحث بالمنطقة..." oninput="loadPublicProperties()">
+            </div>
+
+            <div id="publicPropertiesGrid" class="grid-properties"></div>
+        </section>
+
+        <footer>
+            <p>جميع الحقوق محفوظة © 2026 - وكالة أولاد كجنكي العقارية (إدارة: طلال الهادي أحمد موسى)</p>
+        </footer>
+    </div>
+
+    <!-- لوحة التحكم -->
+    <div id="adminApp">
+        <div class="admin-container">
+            <div id="adminAuthView">
+                <div style="max-width: 380px; margin: 40px auto; background: var(--surface); padding: 24px; border-radius: 14px; border: 1px solid var(--border);">
+                    <h3 style="color: var(--dark); text-align: center; margin-bottom: 16px; font-size: 16px;">تسجيل دخول المدير</h3>
+                    <input type="email" id="adminEmail" placeholder="البريد الإلكتروني" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid var(--border); border-radius:8px; font-size:12px;">
+                    <input type="password" id="adminPassword" placeholder="كلمة المرور" style="width:100%; padding:10px; margin-bottom:16px; border:1px solid var(--border); border-radius:8px; font-size:12px;">
+                    <button onclick="adminLogin()" class="btn-primary" style="width:100%;">دخول</button>
+                </div>
+            </div>
+
+            <div id="adminDashboardView" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="color: var(--dark); font-size: 16px;">إضافة عقار جديد</h3>
+                    <button onclick="adminLogout()" class="btn-primary" style="background: #B85C5C;">خروج</button>
+                </div>
+                <div style="background: var(--surface); padding: 18px; border-radius: 14px; border: 1px solid var(--border);">
+                    <div class="form-group"><label>عنوان العقار</label><input type="text" id="propTitle" placeholder="مثال: منزل في الصالحة الثورة"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group"><label>نوع العملية</label><select id="propTrans"><option value="sale">بيع</option><option value="rent">إيجار</option><option value="exchange">استبدال</option></select></div>
+                        <div class="form-group"><label>نوع العقار</label><select id="propCat"><option value="house">منزل</option><option value="land">أرض</option><option value="apartment">شقة</option><option value="shop">محل</option></select></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group"><label>المدينة / الحي</label><input type="text" id="propArea" placeholder="الصالحة"></div>
+                        <div class="form-group"><label>كود العقار (فريد)</label><input type="text" id="propCode" placeholder="KAG-101"></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group"><label>المساحة</label><input type="number" id="propSize" placeholder="400"></div>
+                        <div class="form-group"><label>وحدة المساحة</label><select id="propUnit"><option value="متر مربع">متر مربع</option><option value="لبسة">لبسة</option><option value="فدان">فدان</option></select></div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group"><label>السعر</label><input type="number" id="propPrice" placeholder="0.00"></div>
+                        <div class="form-group"><label>صور العقار (اختر صور متعددة)</label><input type="file" id="propImages" multiple accept="image/*" style="font-size: 11px;"></div>
+                    </div>
+                    <button onclick="addNewProperty()" class="btn-primary" style="width:100%; margin-top: 10px; padding: 12px;">حفظ ونشر العقار</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://jylhwwkthtujhljusagy.supabase.co';
+        const SUPABASE_ANON_KEY = 'Sb_publishable_nn-UcmkWMp-dQCFBebS_Hw_J2zrs1Zg';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash === '#admin' || window.location.pathname.includes('admin')) {
+                document.getElementById('publicSite').style.display = 'none';
+                document.getElementById('adminApp').style.display = 'block';
+                checkAdminAuth();
+            } else {
+                loadPublicProperties();
+            }
+        });
+
+        async function loadPublicProperties() {
+            const type = document.getElementById('filterType').value;
+            const category = document.getElementById('filterCategory').value;
+            const area = document.getElementById('filterArea').value;
+
+            let query = supabase.from('properties').select('*').neq('status', 'hidden');
+            if (type) query = query.eq('transaction_type', type);
+            if (category) query = query.eq('property_type', category);
+            if (area) query = query.ilike('area', `%${area}%`);
+
+            const { data: properties, error } = await query;
+            const grid = document.getElementById('publicPropertiesGrid');
+            
+            if (error || !properties || properties.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 30px; color: var(--text-secondary);">لا توجد عقارات متاحة حالياً.</div>`;
+                return;
+            }
+
+            grid.innerHTML = properties.map(prop => `
+                <div class="prop-card">
+                    <div class="prop-img-container">
+                        <img src="${(prop.images && prop.images[0]) || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=800&q=80'}" alt="${prop.title}">
+                        <span class="prop-badge">${prop.transaction_type}</span>
+                    </div>
+                    <div class="prop-content">
+                        <span class="status-badge status-${prop.status}">${prop.status}</span>
+                        <div class="prop-title">${prop.title}</div>
+                        <div class="prop-location">📍 ${prop.area || 'السودان'}</div>
+                        <div class="prop-details-grid">
+                            <span>المساحة: <b>${prop.area_size || '-'} ${prop.area_unit || ''}</b></span>
+                            <span>الرقم: <b style="color: var(--sage);">${prop.property_code}</b></span>
+                        </div>
+                        <div style="font-size: 10px; color: var(--primary);">✔ مراجع من الوكالة</div>
+                    </div>
+                    <div class="prop-footer">
+                        <div class="prop-price">${Number(prop.price).toLocaleString()} ${prop.currency}</div>
+                        <a href="https://wa.me/249922335500?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن العقار رقم: ' + prop.property_code)}" target="_blank" class="btn-whatsapp">استفسار واتساب</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function adminLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) alert('خطأ: ' + error.message);
+            else checkAdminAuth();
+        }
+
+        async function checkAdminAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                document.getElementById('adminAuthView').style.display = 'none';
+                document.getElementById('adminDashboardView').style.display = 'block';
+            } else {
+                document.getElementById('adminAuthView').style.display = 'block';
+                document.getElementById('adminDashboardView').style.display = 'none';
+            }
+        }
+
+        async function adminLogout() {
+            await supabase.auth.signOut();
+            checkAdminAuth();
+        }
+
+        async function addNewProperty() {
+            const title = document.getElementById('propTitle').value;
+            const transaction_type = document.getElementById('propTrans').value;
+            const property_type = document.getElementById('propCat').value;
+            const area = document.getElementById('propArea').value;
+            const property_code = document.getElementById('propCode').value;
+            const area_size = document.getElementById('propSize').value;
+            const area_unit = document.getElementById('propUnit').value;
+            const price = document.getElementById('propPrice').value;
+            const filesInput = document.getElementById('propImages');
+
+            if (!title || !property_code || !price) {
+                alert('الرجاء تعبئة الحقول الأساسية (العنوان، الكود، السعر)');
+                return;
+            }
+
+            let imageUrls = [];
+            for (let i = 0; i < filesInput.files.length; i++) {
+                const file = filesInput.files[i];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage.from('properties-images').upload(fileName, file);
+                if (!uploadError) {
+                    const { data: { publicUrl } } = supabase.storage.from('properties-images').getPublicUrl(fileName);
+                    imageUrls.push(publicUrl);
+                }
+            }
+
+            const { error } = await supabase.from('properties').insert([{
+                title, transaction_type, property_type, area, property_code,
+                area_size: area_size ? Number(area_size) : null,
+                area_unit, price: Number(price), images: imageUrls, status: 'available'
+            }]);
+
+            if (error) {
+                alert('خطأ أثناء الحفظ: ' + error.message);
+            } else {
+                alert('تم إضافة العقار بنجاح!');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
